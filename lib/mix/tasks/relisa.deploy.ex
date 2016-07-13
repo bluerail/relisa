@@ -54,7 +54,7 @@ defmodule Mix.Tasks.Relisa.Deploy do
     Relisa.subsay "#{host}: Decompressing release archive"
     Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"tar -xf #{deploy_path}/#{archive_name} -C #{deploy_path}\""
     Relisa.subsay "#{host}: Starting app"
-    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"#{sudo_command} #{deploy_path}/bin/#{config[:app]} start\""
+    upgrade_or_start_app(host, key)
   end
 
   defp needs_upgrade?(host, key) do
@@ -68,7 +68,11 @@ defmodule Mix.Tasks.Relisa.Deploy do
     Relisa.subsay "#{host}: Moving archive to release path"
     Mix.Shell.IO.cmd "scp #{key_parameter(key)} #{release_path} #{host}:#{deploy_path}/releases/#{config[:version]}"
     Relisa.subsay "#{host}: Upgrading `#{config[:app]}` to #{config[:version]}"
-    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"#{sudo_command} #{deploy_path}/bin/#{config[:app]} upgrade '#{config[:version]}'\""
+    upgrade_or_start_app(host, key)
+  end
+
+  defp upgrade_or_start_app(host, key) do
+    result = Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} -oStrictHostKeyChecking=no \"if #{deploy_path}/bin/#{config[:app]} ping ; then #{sudo_command} #{deploy_path}/bin/#{config[:app]} upgrade '#{config[:version]}' ; else #{sudo_command} #{deploy_path}/bin/#{config[:app]} start ; fi\""
   end
 
   defp config do
