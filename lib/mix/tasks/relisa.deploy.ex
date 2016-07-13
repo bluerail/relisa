@@ -54,7 +54,7 @@ defmodule Mix.Tasks.Relisa.Deploy do
     Relisa.subsay "#{host}: Decompressing release archive"
     Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"tar -xf #{deploy_path}/#{archive_name} -C #{deploy_path}\""
     Relisa.subsay "#{host}: Starting app"
-    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"sudo #{deploy_path}/bin/#{config[:app]} start\""
+    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"#{sudo_command} #{deploy_path}/bin/#{config[:app]} start\""
   end
 
   defp needs_upgrade?(host, key) do
@@ -68,7 +68,7 @@ defmodule Mix.Tasks.Relisa.Deploy do
     Relisa.subsay "#{host}: Moving archive to release path"
     Mix.Shell.IO.cmd "scp #{key_parameter(key)} #{release_path} #{host}:#{deploy_path}/releases/#{config[:version]}"
     Relisa.subsay "#{host}: Upgrading `#{config[:app]}` to #{config[:version]}"
-    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"sudo #{deploy_path}/bin/#{config[:app]} upgrade '#{config[:version]}'\""
+    Mix.Shell.IO.cmd "ssh #{host} #{key_parameter(key)} \"#{sudo_command} #{deploy_path}/bin/#{config[:app]} upgrade '#{config[:version]}'\""
   end
 
   defp config do
@@ -89,6 +89,15 @@ defmodule Mix.Tasks.Relisa.Deploy do
 
   defp deploy_path do
     "~/#{config[:app]}"
+  end
+
+  # Always use sudo unless explicitly disabled in the config
+  defp sudo_command do
+    if Application.get_env(:relisa, :use_sudo) == false do
+      ""
+    else
+      "sudo"
+    end
   end
 
   defp key_parameter(_key=nil) do

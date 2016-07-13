@@ -10,4 +10,7 @@ config :relisa,
     # Hooks are Mix tasks that will be executed at certain life-cycle moments
     # in Relisa
     # pre: ["phoenix.digest"]
-  ]
+  ],
+  # Relisa uses sudo to start or upgrade the application by default. You can
+  # disable this below
+  use_sudo: true
